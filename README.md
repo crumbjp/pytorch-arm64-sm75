@@ -130,15 +130,7 @@ uv pip install "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/d
 
 ## Installation
 
-### Direct URL with uv / pip
-
-```toml
-# pyproject.toml
-[project]
-dependencies = [
-    "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl",
-]
-```
+### Quick install with pip / uv
 
 ```bash
 # pip
@@ -146,6 +138,78 @@ pip install "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/down
 
 # uv
 uv add "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl"
+```
+
+### `pyproject.toml` examples
+
+#### Minimal (PEP 508 direct URL)
+
+```toml
+[project]
+name = "your-project"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl",
+]
+```
+
+#### uv with platform-conditional dependency
+
+If your `pyproject.toml` is shared between aarch64 (g5g) and other
+architectures, gate the wheel on the platform so it only resolves on
+Linux aarch64:
+
+```toml
+[project]
+name = "your-project"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # On AWS g5g (Linux aarch64) — use this prebuilt wheel.
+    "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64'",
+    # On other platforms — use the official PyPI build.
+    "torch ; sys_platform != 'linux' or platform_machine != 'aarch64'",
+]
+```
+
+#### uv with `[tool.uv.sources]` (recommended for uv users)
+
+```toml
+[project]
+name = "your-project"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "torch",
+]
+
+[tool.uv.sources]
+torch = { url = "https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl" }
+```
+
+To restrict the override to aarch64 only (keeping PyPI for other platforms):
+
+```toml
+[tool.uv.sources]
+torch = [
+    { url = "https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl",
+      marker = "sys_platform == 'linux' and platform_machine == 'aarch64'" },
+]
+```
+
+#### Poetry
+
+```toml
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+torch = { url = "https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl" }
+```
+
+#### `requirements.txt` (pip)
+
+```
+torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl
 ```
 
 ---
