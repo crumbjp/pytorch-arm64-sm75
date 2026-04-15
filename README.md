@@ -1,46 +1,61 @@
-# PyTorch 2.11.0 for ARM64 + NVIDIA T4G (SM_75) + CUDA 12.8
+# PyTorch 2.11.0 for AWS g5g (ARM64 + NVIDIA T4G / SM_75 + CUDA 12.8)
 
-NVIDIA T4G (AWS Graviton + Turing) 向けにソースビルドした PyTorch wheel。
-公式配布バイナリでは SM_75 が有効化されていないため、T4G 上での動作を保証する専用ビルドです。
+A PyTorch wheel built from source for **AWS EC2 `g5g` instances**
+(Graviton2 + NVIDIA T4G GPU).
+
+The official PyTorch binaries do not enable `SM_75` for the aarch64 builds,
+so this wheel is provided to ensure proper operation of the T4G GPU on g5g.
 
 ---
 
-## 成果物
+## Target Environment
 
-| 項目 | 値 |
+| Item | Value |
 |---|---|
-| ファイル | `torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl` |
-| サイズ | 167 MB |
+| Instance type | **AWS EC2 `g5g.*`** (g5g.xlarge / 2xlarge / 4xlarge / 8xlarge / 16xlarge / metal) |
+| CPU | AWS Graviton2 (aarch64) |
+| GPU | NVIDIA T4G — Compute Capability **7.5 / SM_75** |
+| OS | Ubuntu 24.04 LTS (Noble) |
+
+---
+
+## Artifact
+
+| Item | Value |
+|---|---|
+| File | `torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl` |
+| Size | 167 MB |
 | SHA256 | `659816dcc0ce9b0fa6ff8b2f8ff20a76944f37c3106a6d98eb36544ead6b82f9` |
 | PyTorch | 2.11.0 (tag `v2.11.0`, commit `70d99e9`) |
 
 ---
 
-## 動作条件
+## Requirements
 
-### ハードウェア
+### Hardware
 
-| 項目 | 要件 |
+| Item | Requirement |
 |---|---|
-| CPU | ARM64 / aarch64（AWS Graviton2 相当） |
-| GPU | **NVIDIA T4G** (Compute Capability **7.5 / SM_75** のみ) |
+| CPU | ARM64 / aarch64 (AWS Graviton2 or compatible) |
+| GPU | **NVIDIA T4G** — Compute Capability **7.5 / SM_75** only |
 
-> **注意:** `TORCH_CUDA_ARCH_LIST=7.5` でビルドしているため、**他の GPU 世代（A100, H100, Jetson, etc.）では動作しません**。
+> **Note:** This wheel is built with `TORCH_CUDA_ARCH_LIST=7.5`.
+> It will **not work** on other GPU generations (A10G, A100, H100, Jetson, etc.).
 
-### ソフトウェア
+### Software
 
-| 項目 | バージョン | 備考 |
+| Item | Version | Notes |
 |---|---|---|
-| OS | Ubuntu 24.04 LTS (Noble) | glibc 2.39 以上 |
-| Kernel | Linux aarch64 | 6.x 系で確認済み |
-| NVIDIA Driver | **595.58.03 以上** | CUDA 12.8 要件 |
-| CUDA Runtime | **12.8** | ランタイムは wheel に同梱されないため別途インストール必要 |
-| cuDNN | 9.x for CUDA 12 | 9.20 で確認済み |
-| Python | **3.12** | cp312 ABI 固定 |
+| OS | Ubuntu 24.04 LTS (Noble) | glibc >= 2.39 |
+| Kernel | Linux aarch64 | Tested on 6.x |
+| NVIDIA Driver | **>= 595.58.03** | Required by CUDA 12.8 |
+| CUDA Runtime | **12.8** | Not bundled in the wheel; install separately |
+| cuDNN | 9.x for CUDA 12 | Tested with 9.20 |
+| Python | **3.12** | cp312 ABI only |
 
-### 依存 CUDA パッケージ（Ubuntu apt）
+### Required Ubuntu apt packages
 
-NVIDIA 公式 SBSA リポジトリ (`cuda-ubuntu2404-sbsa`) から：
+From the official NVIDIA SBSA repository (`cuda-ubuntu2404-sbsa`):
 
 ```bash
 sudo apt install -y \
@@ -49,33 +64,33 @@ sudo apt install -y \
     libcudnn9-dev-cuda-12
 ```
 
-ドライバは `nvidia-driver` / `cuda-drivers` (>= 595.58.03)。
+Driver: `nvidia-driver` / `cuda-drivers` (>= 595.58.03).
 
 ---
 
-## インストール
+## Installation
 
-### uv / pip で URL 直接指定
+### Direct URL with uv / pip
 
 ```toml
 # pyproject.toml
 [project]
 dependencies = [
-    "torch @ https://github.com/USER/REPO/releases/download/v2.11.0-arm64-sm75-cu128/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl",
+    "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl",
 ]
 ```
 
 ```bash
 # pip
-pip install "torch @ https://github.com/USER/REPO/releases/download/v2.11.0-arm64-sm75-cu128/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl"
+pip install "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl"
 
 # uv
-uv add "torch @ https://github.com/USER/REPO/releases/download/v2.11.0-arm64-sm75-cu128/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl"
+uv add "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl"
 ```
 
 ---
 
-## 動作確認
+## Verification
 
 ```python
 import torch
@@ -92,7 +107,7 @@ y = x @ x
 print("matmul ok:", y.shape, y.device)
 ```
 
-### 期待される出力
+### Expected output
 
 ```
 torch: 2.11.0a0+git70d99e9
@@ -106,9 +121,9 @@ matmul ok: torch.Size([256, 256]) cuda:0
 
 ---
 
-## ビルド構成
+## Build Configuration
 
-| 項目 | 値 |
+| Item | Value |
 |---|---|
 | `TORCH_CUDA_ARCH_LIST` | `7.5` |
 | `USE_CUDA` | 1 |
@@ -116,31 +131,33 @@ matmul ok: torch.Size([256, 256]) cuda:0
 | `USE_DISTRIBUTED` | 1 |
 | `USE_NCCL` | 0 |
 | `USE_MKLDNN` | 0 |
-| コンパイラ | gcc 13.3 (Ubuntu 24.04 標準) |
+| Compiler | gcc 13.3 (Ubuntu 24.04 default) |
 | CMake | 4.3.1 |
 
 ---
 
-## 制限事項
+## Limitations
 
-- **NCCL 無効**: 複数 GPU / 分散学習時の NCCL backend は使えません。単機シングル GPU 用途を想定。
-- **MKLDNN 無効**: aarch64 の CPU 推論は OpenBLAS / XNNPACK / NNPACK 経由。
-- **SM_75 以外未対応**: A10G / A100 / H100 / Jetson 等では起動に失敗、または kernel 未実装エラーになります。
-- **Python 3.12 固定**: cp312 ABI のみ。3.11 / 3.13 では使えません。
-- **aarch64 固定**: x86_64 では使えません。
-
----
-
-## 周辺エコシステムについて
-
-CUDA 12.8 系のため、以下のライブラリは別途バージョン整合性を確認してください：
-
-- `torchvision`, `torchaudio` — 公式バイナリは CUDA 12.8 / aarch64 向けが限定的。同様にソースビルドが必要な場合あり
-- `xformers`, `flash-attn`, `bitsandbytes` — CUDA 12.8 対応版またはソースビルドが必要
-- `triton` — ARM64 サポート状況を要確認
+- **NCCL disabled**: The NCCL backend for multi-GPU / distributed training is not available. Intended for single-host single-GPU workloads.
+- **MKLDNN disabled**: CPU inference paths use OpenBLAS / XNNPACK / NNPACK on aarch64.
+- **SM_75 only**: Will fail to launch (or hit "no kernel image" errors) on A10G / A100 / H100 / Jetson and other architectures.
+- **Python 3.12 only**: cp312 ABI exclusively. Not usable with 3.11 or 3.13.
+- **aarch64 only**: Not usable on x86_64.
 
 ---
 
-## ライセンス
+## Ecosystem Notes
 
-PyTorch 本体のライセンス（BSD-3-Clause）に従います。本 wheel は PyTorch 公式ソース (`https://github.com/pytorch/pytorch` tag `v2.11.0`) をそのままビルドしたものです。
+Because this targets CUDA 12.8, please verify version compatibility for related libraries:
+
+- `torchvision`, `torchaudio` — Official aarch64 + CUDA 12.8 binaries are limited; you may also need to build from source.
+- `xformers`, `flash-attn`, `bitsandbytes` — Require CUDA 12.8-compatible builds or source builds.
+- `triton` — Verify aarch64 support status.
+
+---
+
+## License
+
+Subject to the PyTorch license (BSD-3-Clause). This wheel is an unmodified
+build of the official PyTorch source at `https://github.com/pytorch/pytorch`
+tag `v2.11.0`.
