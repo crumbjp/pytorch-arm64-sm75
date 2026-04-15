@@ -50,7 +50,7 @@ so this wheel is provided to ensure proper operation of the T4G GPU on g5g.
 | Kernel | Linux aarch64 | Tested on 6.x |
 | NVIDIA Driver | **>= 595.58.03** | Required by CUDA 12.8 |
 | CUDA Runtime | **12.8** | Not bundled in the wheel; install separately |
-| cuDNN | 9.x for CUDA 12 | Tested with 9.20 |
+| cuDNN | 9.x for CUDA 12 | Verified with 9.20 / 9.21 (any 9.x for CUDA 12 should work) |
 | Python | **3.12** | cp312 ABI only |
 
 ### Required Ubuntu apt packages
@@ -75,11 +75,14 @@ to run this wheel. Run as `root` (or prepend `sudo`).
 
 ```bash
 # 1. Update apt and install matching kernel headers
-#    (the AWS-specific meta-package can pin an outdated header version
-#     and conflict with the running kernel; remove it first)
 apt update
-apt remove -y linux-aws-headers-6.8.0-1024 || true
 apt install -y linux-headers-$(uname -r)
+# Note: an AWS-specific meta-package such as `linux-aws-headers-*` may
+# pin an outdated header version that conflicts with the running kernel.
+# Only if the install above fails with such a conflict, remove the
+# offending package first, e.g.:
+#   apt remove -y linux-aws-headers-<old-version>
+# then retry the install.
 
 # 2. Add the NVIDIA CUDA SBSA (ARM64 server) apt repository
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/cuda-keyring_1.1-1_all.deb
@@ -216,6 +219,15 @@ torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-
 
 ## Verification
 
+> **Tip:** PyTorch itself does not pull in NumPy as a hard dependency,
+> but most ML workflows do. If you see
+> `UserWarning: Failed to initialize NumPy: No module named 'numpy'`
+> on import, install it explicitly:
+>
+> ```bash
+> uv pip install numpy
+> ```
+
 ```python
 import torch
 
@@ -237,7 +249,7 @@ print("matmul ok:", y.shape, y.device)
 torch: 2.11.0a0+git70d99e9
 cuda available: True
 cuda version: 12.8
-cudnn version: 92000
+cudnn version: 92100        # any 9.x for CUDA 12; e.g. 92000 (9.20), 92100 (9.21)
 device name: NVIDIA T4G
 device capability: (7, 5)
 matmul ok: torch.Size([256, 256]) cuda:0
