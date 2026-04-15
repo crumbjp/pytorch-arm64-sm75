@@ -68,6 +68,66 @@ Driver: `nvidia-driver` / `cuda-drivers` (>= 595.58.03).
 
 ---
 
+## Runtime Environment Setup (from a fresh Ubuntu 24.04 g5g instance)
+
+The following sequence prepares a fresh AWS g5g instance (Ubuntu 24.04 LTS)
+to run this wheel. Run as `root` (or prepend `sudo`).
+
+```bash
+# 1. Update apt and install matching kernel headers
+#    (the AWS-specific meta-package can pin an outdated header version
+#     and conflict with the running kernel; remove it first)
+apt update
+apt remove -y linux-aws-headers-6.8.0-1024 || true
+apt install -y linux-headers-$(uname -r)
+
+# 2. Add the NVIDIA CUDA SBSA (ARM64 server) apt repository
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/cuda-keyring_1.1-1_all.deb
+dpkg -i cuda-keyring_1.1-1_all.deb
+apt update
+
+# 3. Install CUDA 12.8 toolkit + driver + cuDNN 9 + OpenBLAS
+apt install -y cuda-toolkit-12-8
+apt install -y cuda-drivers
+apt install -y libcudnn9-cuda-12 libcudnn9-dev-cuda-12 libopenblas0
+
+# 4. Reboot to load the NVIDIA kernel modules
+reboot
+```
+
+After reboot, verify the GPU is visible:
+
+```bash
+nvidia-smi
+# Expect to see "NVIDIA T4G" with a working driver / CUDA 12.8 runtime.
+```
+
+### Python 3.12 environment (via uv)
+
+```bash
+# Install uv (per-user)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create a project venv pinned to Python 3.12
+uv venv --python 3.12 .venv
+source .venv/bin/activate
+
+# Install this PyTorch wheel
+uv pip install "torch @ https://github.com/crumbjp/pytorch-arm64-sm75/releases/download/v2.11.0-cu128-cp312/torch-2.11.0a0+git70d99e9-cp312-cp312-linux_aarch64.whl"
+```
+
+### Notes
+
+- The kernel header step is required so the NVIDIA driver's DKMS module
+  can build against the running kernel.
+- `cuda-toolkit-12-8` brings in the full toolkit (nvcc, headers, libraries).
+  If you only need the runtime (no compilation on the box), `cuda-runtime-12-8`
+  is sufficient and smaller.
+- `libopenblas0` is needed because this wheel uses OpenBLAS for CPU BLAS
+  operations (MKLDNN is disabled on aarch64).
+
+---
+
 ## Installation
 
 ### Direct URL with uv / pip
